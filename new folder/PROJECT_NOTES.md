@@ -235,7 +235,8 @@ Part 5: QA + Performance Testing
 * Automated unit/integration/E2E tests.
 * Cross-browser + mobile frontend tests.
 * Validate funnel flows and admin panel.
-* Confirm performance budget:
+  
+Confirm performance budget:
 * API <300ms
 * FCP <2s
 * LCP <3s
