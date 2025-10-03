@@ -820,5 +820,184 @@ For technical support or questions about this CMS backend implementation:
 ✅ **Future-Proof**: Modular architecture for easy extensions  
 ✅ **Production Ready**: Comprehensive error handling and logging  
 
+## Hostinger Deployment Guide
+
+### Quick Deployment Checklist
+
+See `DEPLOYMENT_GUIDE.md` for comprehensive deployment instructions.
+
+**Pre-Deployment:**
+- [ ] Configure all environment variables in `.env`
+- [ ] Test locally with production database
+- [ ] Run build: `npm run build`
+- [ ] Export database: `php scripts/backup_database.php`
+- [ ] Verify all API integrations are configured
+
+**Deployment:**
+- [ ] Upload files via FTP/SSH to Hostinger
+- [ ] Import database schema and migrations
+- [ ] Set file permissions (755 for dirs, 644 for files, 775 for uploads/cache)
+- [ ] Configure `.user.ini` for PHP settings
+- [ ] Test database connection
+- [ ] Verify API endpoints respond correctly
+
+**Post-Deployment:**
+- [ ] Configure SMTP (see `SMTP_SETUP_GUIDE.md`)
+- [ ] Set up cron jobs for cache clearing and backups
+- [ ] Enable Cloudflare CDN
+- [ ] Run load tests (`php scripts/load_test.php`)
+- [ ] Configure SSL certificate
+- [ ] Update DNS records
+- [ ] Test contact form and email notifications
+- [ ] Verify admin panel access
+
+### Essential Files & Guides
+
+| Guide | Purpose |
+|-------|---------|
+| `DEPLOYMENT_GUIDE.md` | Complete Hostinger deployment instructions |
+| `SMTP_SETUP_GUIDE.md` | Email configuration for multiple providers |
+| `CACHING_GUIDE.md` | Caching strategies and CDN integration |
+| `MEDIA_OPTIMIZATION_GUIDE.md` | Image/video optimization best practices |
+| `LOAD_TESTING_GUIDE.md` | Performance testing and optimization |
+| `README_APIS.md` | Complete API documentation and integration guide |
+
+### Automated Scripts
+
+**Maintenance Scripts:**
+```bash
+# Database backup (run daily via cron)
+php scripts/backup_database.php
+
+# Restore from backup
+php scripts/restore_database.php /path/to/backup.sql.gz
+
+# Clear expired cache (run hourly via cron)
+php scripts/clear_cache.php
+
+# Clean old logs (run weekly via cron)
+php scripts/clean_logs.php
+
+# Test SMTP configuration
+php scripts/test_smtp.php your-email@example.com
+
+# Run load test
+php scripts/load_test.php
+```
+
+**Recommended Cron Jobs:**
+```cron
+# Clear expired cache every hour
+0 * * * * php /home/username/public_html/backend/scripts/clear_cache.php
+
+# Daily database backup at 2 AM
+0 2 * * * php /home/username/public_html/backend/scripts/backup_database.php
+
+# Clean old logs every Sunday at midnight
+0 0 * * 0 php /home/username/public_html/backend/scripts/clean_logs.php
+```
+
+### Performance Optimization
+
+**Enabled Optimizations:**
+- ✅ OPcache for PHP bytecode caching
+- ✅ Database query result caching
+- ✅ File-based or database-based cache system
+- ✅ Gzip compression for API responses
+- ✅ Image optimization on upload
+- ✅ Lazy loading for frontend images
+- ✅ CDN integration (Cloudflare)
+- ✅ Far-future expires headers for static assets
+
+**Performance Targets:**
+- API Response Time: < 300ms average
+- Database Queries: < 50ms average
+- Page Load (FCP): < 2 seconds
+- Page Load (LCP): < 3 seconds
+- Lighthouse Score: > 90
+
+### Security Features
+
+**Implemented Protections:**
+- ✅ JWT authentication with secure tokens
+- ✅ Password hashing with bcrypt (cost 12)
+- ✅ Rate limiting (100 req/hour per IP)
+- ✅ CORS whitelist protection
+- ✅ SQL injection prevention (prepared statements)
+- ✅ XSS prevention (input sanitization)
+- ✅ CSRF token validation
+- ✅ File upload security (type/size validation)
+- ✅ Secure session handling
+- ✅ Security headers (X-Frame-Options, X-XSS-Protection, etc.)
+
+**Security Checklist:**
+- [ ] Change default JWT secret to strong random string
+- [ ] Set strong database passwords
+- [ ] Enable HTTPS only (disable HTTP)
+- [ ] Configure firewall rules
+- [ ] Set up automated backups
+- [ ] Review and set file permissions
+- [ ] Disable directory listing
+- [ ] Protect `.env` file from web access
+- [ ] Enable error logging (disable display in production)
+- [ ] Regular security audits
+
+### Monitoring & Maintenance
+
+**Health Checks:**
+```bash
+# Check API health
+curl https://yourdomain.com/backend/api/services.php
+
+# Check database connection
+mysql -u username -p -h localhost adilgfx_db -e "SELECT 1"
+
+# Check disk space
+df -h
+
+# Check PHP error logs
+tail -f /home/username/logs/php_errors.log
+```
+
+**Regular Maintenance Tasks:**
+- Daily: Review error logs, check backup success
+- Weekly: Review performance metrics, check disk space
+- Monthly: Update dependencies, security audit, test backup restoration
+- Quarterly: Review and optimize database, performance testing
+
+### Troubleshooting Quick Reference
+
+| Issue | Solution |
+|-------|----------|
+| 500 Internal Server Error | Check `.htaccess`, verify PHP version, review error logs |
+| Database Connection Failed | Verify credentials in `.env`, check MySQL service |
+| API Returns 404 | Verify `.htaccess` mod_rewrite is enabled, check file paths |
+| File Upload Fails | Check `uploads/` permissions (775), verify PHP upload limits |
+| CORS Issues | Verify domain in `ALLOWED_ORIGINS` in `config/config.php` |
+| Slow API Response | Check cache is enabled, optimize slow queries, review indexes |
+| Email Not Sending | Test SMTP config with `test_smtp.php`, check credentials |
+| Rate Limit Errors | Increase limits in config or whitelist IP |
+
+### Integration Status
+
+**API Integrations (Part 2):**
+- ✅ Stripe Payment Processing
+- ✅ SendGrid Email Service
+- ✅ WhatsApp Business API
+- ✅ Telegram Bot Notifications
+- ✅ Coinbase Commerce (Crypto Payments)
+- ✅ Google Search Console
+- ✅ PageSpeed Insights API
+
+**Funnel Tester Engine:**
+- ✅ Visitor flow simulation (4 scenarios)
+- ✅ Conversion tracking
+- ✅ Funnel analytics and reporting
+- ✅ A/B testing foundation
+- ✅ Session duration tracking
+- ✅ Drop-off point identification
+
+See `README_APIS.md` for complete API integration documentation.
+
 ## License
 MIT License - See LICENSE file for details
