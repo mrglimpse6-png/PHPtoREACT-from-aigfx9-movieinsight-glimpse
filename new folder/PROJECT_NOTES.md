@@ -213,19 +213,30 @@ Simulate and debug funnels inside admin panel:
 
 ✅ Part 2 Approved.
 
+Part 3: Deployment & Optimization
+* Prepare Hostinger deployment configuration (PHP version, .htaccess, DB migrations, file permissions).
+* Configure SMTP for transactional emails.
+* Set up caching (object cache, query cache, CDN).
+* Add automated backup & restore scripts (DB + media).
+* Optimize media handling (lazy loading, compression).
+* Run load testing to confirm Hostinger resource limits are not exceeded.
+
+✅ Part 3 complete, check it and approve if completed
 ---
 
 🔮 Next Steps
 
-✅ Part 1 (Audit + Core APIs + Admin groundwork) — Completed  
-✅ Part 2 (API Integrations + Funnel Flow Tester) — Completed  
+Part 4: Documentation
+* README_APIS.md: APIs, usage limits, setup guide.
+* README_BACKEND.md: Endpoints, funnel tester workflow, admin panel, API toggling.
+* Hostinger deployment guide + troubleshooting.
 
-➡️ Phase 2: Deploy
-- Finalize documentation (README_APIS.md, README_BACKEND.md)  
-- Prepare Hostinger deployment configuration (migrations, SMTP, caching, backups)  
-
-➡️ Phase 3: Optimize
-- QA testing (unit, integration, end-to-end)  
-- Performance testing (API speed, Lighthouse audits, DB query optimization)  
-- Verify system meets performance budget (FCP <2s, LCP <3s, API <300ms)  
-
+Part 5: QA + Performance Testing
+* Automated unit/integration/E2E tests.
+* Cross-browser + mobile frontend tests.
+* Validate funnel flows and admin panel.
+* Confirm performance budget:
+* API <300ms
+* FCP <2s
+* LCP <3s
+* Lighthouse ≥90
