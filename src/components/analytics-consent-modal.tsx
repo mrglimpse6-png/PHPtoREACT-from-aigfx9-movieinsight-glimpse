@@ -62,6 +62,7 @@ export function AnalyticsConsentModal() {
     } else {
       disableAnalytics();
     }
+    localStorage.setItem('cookie_preferences', JSON.stringify(preferences));
     localStorage.setItem(CONSENT_SHOWN_KEY, 'true');
     setShowCustomize(false);
     setIsVisible(false);
@@ -78,19 +79,24 @@ export function AnalyticsConsentModal() {
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="fixed bottom-0 left-0 right-0 z-50 p-4 md:bottom-6 md:left-6 md:right-auto md:max-w-lg"
           >
-            <div className="bg-card border border-border rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl">
-              <div className="bg-gradient-to-r from-youtube-red/10 to-transparent p-6 pb-4">
+            <div className="bg-card border-2 border-border rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl">
+              <div className="bg-gradient-to-br from-youtube-red/10 via-transparent to-blue-500/5 p-6 pb-4">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                  <motion.div
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                    className="w-12 h-12 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md"
+                  >
                     <Cookie className="h-6 w-6 text-youtube-red" />
-                  </div>
+                  </motion.div>
 
                   <div className="flex-1">
                     <h3 className="font-bold text-lg text-foreground mb-1.5">
                       Cookie Preferences
                     </h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      We use cookies to enhance your browsing experience and analyze site traffic. Choose your preferences below.
+                      We use cookies to enhance your browsing experience and analyze site traffic. Your privacy is important to us.
                     </p>
                   </div>
                 </div>
@@ -102,20 +108,31 @@ export function AnalyticsConsentModal() {
                   <span>Your privacy matters. No data is sold to third parties.</span>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <Button
-                    onClick={handleAcceptAll}
-                    className="w-full bg-gradient-youtube hover:shadow-glow transition-all duration-300 font-semibold h-11"
+                <div className="flex flex-col gap-2.5">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
                   >
-                    <Check className="h-4 w-4 mr-2" />
-                    Accept All
-                  </Button>
+                    <Button
+                      onClick={handleAcceptAll}
+                      className="w-full bg-gradient-youtube hover:shadow-glow hover:scale-[1.02] transition-all duration-300 font-semibold h-11"
+                    >
+                      <Check className="h-4 w-4 mr-2" />
+                      Accept All Cookies
+                    </Button>
+                  </motion.div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="grid grid-cols-2 gap-2"
+                  >
                     <Button
                       onClick={handleDenyAll}
                       variant="outline"
-                      className="border-border hover:bg-muted font-medium h-10"
+                      className="border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50 font-medium h-10 transition-all duration-200"
                     >
                       <XIcon className="h-3.5 w-3.5 mr-1.5" />
                       Deny All
@@ -123,12 +140,12 @@ export function AnalyticsConsentModal() {
                     <Button
                       onClick={() => setShowCustomize(true)}
                       variant="outline"
-                      className="border-border hover:bg-muted font-medium h-10"
+                      className="border-border hover:bg-muted hover:border-youtube-red/50 font-medium h-10 transition-all duration-200"
                     >
                       <Settings2 className="h-3.5 w-3.5 mr-1.5" />
                       Customize
                     </Button>
-                  </div>
+                  </motion.div>
                 </div>
 
                 <p className="text-[10px] text-center text-muted-foreground mt-3 leading-relaxed">

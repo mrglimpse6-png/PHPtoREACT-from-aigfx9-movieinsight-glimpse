@@ -15,43 +15,69 @@ export function PopupOffer({ variant = 'first-time' }: PopupOfferProps) {
   const { toast } = useToast()
 
   useEffect(() => {
-    // Check if user has seen the popup before
     const hasSeenPopup = localStorage.getItem('hasSeenPopup')
-    const lastVisit = localStorage.getItem('lastVisit')
+    const popupTimestamp = localStorage.getItem('popupTimestamp')
     const now = Date.now()
+    const oneDayMs = 24 * 60 * 60 * 1000
 
-    if (variant === 'first-time' && !hasSeenPopup) {
-      // Show popup after 5 seconds for first-time visitors
-      const timer = setTimeout(() => {
-        setIsOpen(true)
-        localStorage.setItem('hasSeenPopup', 'true')
-      }, 5000)
-      return () => clearTimeout(timer)
-    }
-
-    if (variant === 'returning' && lastVisit) {
-      const daysSinceLastVisit = (now - parseInt(lastVisit)) / (1000 * 60 * 60 * 24)
-      // Show popup for returning visitors after 7 days
-      if (daysSinceLastVisit >= 7) {
+    if (variant === 'first-time') {
+      if (!hasSeenPopup || (popupTimestamp && (now - parseInt(popupTimestamp)) > oneDayMs)) {
         const timer = setTimeout(() => {
           setIsOpen(true)
-        }, 3000)
+          localStorage.setItem('hasSeenPopup', 'true')
+          localStorage.setItem('popupTimestamp', now.toString())
+        }, 10000)
         return () => clearTimeout(timer)
       }
     }
 
-    // Update last visit timestamp
-    localStorage.setItem('lastVisit', now.toString())
+    if (variant === 'returning') {
+      const lastPopup = localStorage.getItem('returningPopupTimestamp')
+      const sevenDaysMs = 7 * 24 * 60 * 60 * 1000
+
+      if (!lastPopup || (now - parseInt(lastPopup)) > sevenDaysMs) {
+        const timer = setTimeout(() => {
+          setIsOpen(true)
+          localStorage.setItem('returningPopupTimestamp', now.toString())
+        }, 5000)
+        return () => clearTimeout(timer)
+      }
+    }
   }, [variant])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (email) {
-      toast({
-        title: "Success!",
-        description: "Your discount code has been sent to your email",
-      })
-      setIsOpen(false)
+      try {
+        const response = await fetch('/backend/api/newsletter.php?action=subscribe', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            source: 'popup_offer',
+            variant
+          }),
+        })
+
+        if (response.ok) {
+          toast({
+            title: "Success!",
+            description: "Your discount code has been sent to your email",
+          })
+          setIsOpen(false)
+          setEmail("")
+        } else {
+          throw new Error('Subscription failed')
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Something went wrong. Please try again.",
+          variant: "destructive"
+        })
+      }
     }
   }
 

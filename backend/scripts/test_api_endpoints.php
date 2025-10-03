@@ -4,18 +4,23 @@
  * Tests all critical API endpoints
  */
 
-$baseUrl = 'http://localhost/backend';
+$baseUrl = getenv('API_BASE_URL') ?: 'http://localhost/backend';
 $testResults = [];
 $passed = 0;
 $failed = 0;
+$totalTime = 0;
 
-echo "=== API Endpoint Testing ===\n";
+echo "╔═══════════════════════════════════════════════════════════╗\n";
+echo "║           API Endpoint Integration Tests                 ║\n";
+echo "╚═══════════════════════════════════════════════════════════╝\n\n";
 echo "Base URL: {$baseUrl}\n\n";
 
 /**
  * Test an endpoint
  */
 function testEndpoint($url, $method = 'GET', $data = null, $token = null) {
+    $startTime = microtime(true);
+
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -48,10 +53,14 @@ function testEndpoint($url, $method = 'GET', $data = null, $token = null) {
     $error = curl_error($ch);
     curl_close($ch);
 
+    $endTime = microtime(true);
+    $responseTime = round(($endTime - $startTime) * 1000, 2);
+
     return [
         'status' => $httpCode,
         'response' => $response,
-        'error' => $error
+        'error' => $error,
+        'time' => $responseTime
     ];
 }
 
@@ -178,7 +187,9 @@ $tests = [
 
 // Run tests
 foreach ($tests as $test) {
-    echo "Testing: {$test['name']}\n";
+    echo "╭─────────────────────────────────────────────────────────╮\n";
+    echo "│ {$test['name']}\n";
+    echo "╰─────────────────────────────────────────────────────────╯\n";
 
     $url = $baseUrl . $test['url'];
     $result = testEndpoint(
@@ -201,36 +212,61 @@ foreach ($tests as $test) {
     }
 
     if ($statusOk && $responseOk) {
-        echo "  ✅ PASSED (Status: {$result['status']})\n";
-        $testResults[$test['name']] = 'PASS';
+        echo "  ✅ PASSED\n";
+        echo "  Method: {$test['method']}\n";
+        echo "  Status: {$result['status']}\n";
+        echo "  Response Time: {$result['time']}ms\n";
+        $testResults[$test['name']] = [
+            'status' => 'PASS',
+            'time' => $result['time']
+        ];
+        $totalTime += $result['time'];
         $passed++;
     } else {
         echo "  ❌ FAILED\n";
+        echo "  Method: {$test['method']}\n";
         echo "  Expected Status: " . implode(' or ', $expectedStatus) . "\n";
         echo "  Actual Status: {$result['status']}\n";
+        echo "  Response Time: {$result['time']}ms\n";
         if (!$responseOk && !empty($result['response'])) {
             echo "  Response: " . substr($result['response'], 0, 200) . "...\n";
         }
         if ($result['error']) {
             echo "  Error: {$result['error']}\n";
         }
-        $testResults[$test['name']] = 'FAIL';
+        $testResults[$test['name']] = [
+            'status' => 'FAIL',
+            'time' => $result['time']
+        ];
+        $totalTime += $result['time'];
         $failed++;
     }
     echo "\n";
 }
 
 // Summary
-echo "=== Test Summary ===\n";
-echo "Total Tests: " . ($passed + $failed) . "\n";
-echo "Passed: {$passed}\n";
-echo "Failed: {$failed}\n";
+$totalTests = $passed + $failed;
+$avgTime = $totalTests > 0 ? round($totalTime / $totalTests, 2) : 0;
+
+echo "╔═══════════════════════════════════════════════════════════╗\n";
+echo "║                  TEST SUMMARY                             ║\n";
+echo "╠═══════════════════════════════════════════════════════════╣\n";
+echo "║ Total Tests:      " . str_pad($totalTests, 39) . "║\n";
+echo "║ Passed:           " . str_pad($passed . " ✅", 45) . "║\n";
+echo "║ Failed:           " . str_pad($failed . ($failed > 0 ? " ❌" : " ✅"), 45) . "║\n";
+echo "╠═══════════════════════════════════════════════════════════╣\n";
+echo "║ Total Time:       " . str_pad($totalTime . "ms", 39) . "║\n";
+echo "║ Average Time:     " . str_pad($avgTime . "ms", 39) . "║\n";
+echo "╠═══════════════════════════════════════════════════════════╣\n";
 
 if ($failed === 0) {
-    echo "\n✅ ALL TESTS PASSED\n";
+    echo "║         ✅ ALL API TESTS PASSED! ✅                       ║\n";
+    echo "╚═══════════════════════════════════════════════════════════╝\n";
     exit(0);
 } else {
-    echo "\n❌ SOME TESTS FAILED\n";
-    echo "Check the errors above for details.\n";
+    echo "║        ❌ SOME TESTS FAILED ❌                            ║\n";
+    echo "║                                                           ║\n";
+    echo "║  Check the errors above for details.                     ║\n";
+    echo "╚═══════════════════════════════════════════════════════════╝\n";
     exit(1);
 }
