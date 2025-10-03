@@ -13,7 +13,8 @@ Complete guide to all external API integrations in the Adil GFX platform. This d
 5. [Coinbase Commerce (Crypto Payments)](#5-coinbase-commerce)
 6. [Google Search Console](#6-google-search-console)
 7. [PageSpeed Insights](#7-pagespeed-insights)
-8. [Admin Panel API Management](#8-admin-panel-api-management)
+8. [Google Translate API (Translation System)](#8-google-translate-api)
+9. [Admin Panel API Management](#9-admin-panel-api-management)
 
 ---
 
@@ -921,7 +922,439 @@ Returns usage breakdown by API, success rate, and average response time.
 
 ---
 
-## Support & Troubleshooting
+## 8. Google Translate API
+
+### Purpose
+Powers the multilingual translation system with automatic translations for all content types including blogs, services, portfolio items, testimonials, and UI strings.
+
+### Role in System
+- **Auto-Translation**: Automatically translates content to multiple languages
+- **Translation Caching**: Stores translations to reduce API costs
+- **Manual Override**: Admins can edit and improve auto-translations
+- **SEO Optimization**: Generates hreflang tags and translated URLs
+
+### Free Tier Limits
+- **First $300 free** with new Google Cloud account
+- **Free Tier**: 500,000 characters/month (approximately 100,000 words)
+- **Paid Tier**: $20 per 1M characters
+- **Note**: Caching reduces API calls by 80-90%
+
+### Setup Instructions
+
+#### Step 1: Get API Key
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing
+3. Navigate to **APIs & Services → Library**
+4. Search for "Cloud Translation API"
+5. Click "Enable"
+6. Go to **APIs & Services → Credentials**
+7. Click "Create Credentials" → "API Key"
+8. Copy the generated API key
+9. (Optional) Restrict API key to Translation API only
+
+#### Step 2: Configure Environment
+Add to `/backend/.env`:
+```env
+GOOGLE_TRANSLATE_API_KEY=AIzaSyxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+#### Step 3: Run Database Migration
+```bash
+mysql -u [username] -p [database] < backend/database/migrations/translations_schema.sql
+```
+
+This creates:
+- `translations` table (stores all translations)
+- `supported_languages` table (with 12 default languages)
+- `translation_cache` table (reduces API costs)
+- `translation_stats` table (completion tracking)
+
+#### Step 4: Test Translation
+```bash
+curl -X POST http://localhost/backend/api/translations.php \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "auto_translate",
+    "text": "Welcome to Adil GFX",
+    "source_lang": "en",
+    "target_lang": "es"
+  }'
+```
+
+**Expected Response:**
+```json
+{
+  "success": true,
+  "original": "Welcome to Adil GFX",
+  "translated": "Bienvenido a Adil GFX",
+  "source_lang": "en",
+  "target_lang": "es"
+}
+```
+
+### Usage Examples
+
+#### Frontend: Language Switcher
+
+```typescript
+import { useLanguage } from '@/contexts/LanguageContext';
+
+function MyComponent() {
+  const { currentLanguage, setLanguage, availableLanguages } = useLanguage();
+
+  return (
+    <select value={currentLanguage} onChange={(e) => setLanguage(e.target.value)}>
+      {availableLanguages.map(lang => (
+        <option key={lang.lang_code} value={lang.lang_code}>
+          {lang.flag_icon} {lang.native_name}
+        </option>
+      ))}
+    </select>
+  );
+}
+```
+
+#### Frontend: Translate Content
+
+```typescript
+import { useTranslatedContent } from '@/hooks/useTranslatedContent';
+
+function BlogPost({ blog }) {
+  const { getTranslation, currentLanguage } = useTranslatedContent({
+    contentType: 'blog',
+    contentId: blog.id,
+    enabled: currentLanguage !== 'en'
+  });
+
+  return (
+    <article>
+      <h1>{getTranslation('title', blog.title)}</h1>
+      <p>{getTranslation('content', blog.content)}</p>
+    </article>
+  );
+}
+```
+
+#### Backend: Auto-Translate Text
+
+```php
+use TranslationManager;
+
+$translationManager = new TranslationManager();
+
+$translated = $translationManager->autoTranslate(
+    'Hello, welcome to our site',
+    'en',  // source language
+    'es'   // target language
+);
+
+echo $translated; // "Hola, bienvenido a nuestro sitio"
+```
+
+#### Backend: Bulk Translation
+
+```php
+$result = $translationManager->bulkAutoTranslate(
+    'blog',    // content type
+    'es',      // target language
+    100        // limit
+);
+
+print_r($result);
+// Array (
+//   [processed] => 50
+//   [translated] => 48
+//   [target_lang] => es
+// )
+```
+
+### Supported Languages (Default)
+
+| Code | Language | Native Name | RTL | Active by Default |
+|------|----------|-------------|-----|-------------------|
+| en | English | English | No | Yes (default) |
+| es | Spanish | Español | No | Yes |
+| fr | French | Français | No | Yes |
+| ar | Arabic | العربية | Yes | Yes |
+| de | German | Deutsch | No | Yes |
+| pt | Portuguese | Português | No | Yes |
+| it | Italian | Italiano | No | No |
+| ru | Russian | Русский | No | No |
+| zh | Chinese | 中文 | No | No |
+| ja | Japanese | 日本語 | No | No |
+| hi | Hindi | हिन्दी | No | No |
+| tr | Turkish | Türkçe | No | No |
+
+### Cost Optimization Strategies
+
+**1. Translation Cache (30-day expiry)**
+- All API responses cached in database
+- Reusing cached translations is free
+- Reduces API calls by 80-90%
+
+**2. Batch Operations**
+- Translate during off-peak hours
+- Use bulk translation for new content
+- Process 100+ items at once
+
+**3. Manual Overrides**
+- Edit common phrases once
+- Reuse manual translations across pages
+- Mark as "manual" to prevent overwrites
+
+**4. Selective Translation**
+- Only translate active content
+- Skip draft/archived items
+- Prioritize high-traffic pages
+
+**Estimated Costs:**
+- **Small Site** (50 pages, 5 languages): $2-5/month
+- **Medium Site** (500 pages, 5 languages): $15-30/month
+- **Large Site** (5000 pages, 8 languages): $150-300/month
+
+### Translation Quality
+
+**Google Translate API Quality:**
+- ⭐⭐⭐⭐ Spanish, French, German, Portuguese (Excellent)
+- ⭐⭐⭐⭐ Arabic, Italian, Russian, Dutch (Very Good)
+- ⭐⭐⭐ Chinese, Japanese, Korean (Good)
+- ⭐⭐⭐ Hindi, Thai, Vietnamese (Fair - Review Recommended)
+
+**Best Practices for Quality:**
+1. Write clear, simple English source text
+2. Avoid idioms and cultural references
+3. Keep sentences short and direct
+4. Use consistent terminology
+5. Always review auto-translations
+6. Edit critical content manually (CTAs, legal, etc.)
+
+### Admin Panel Features
+
+**Access:** `https://yourdomain.com/admin-translations`
+
+**Dashboard Overview:**
+- Translation completion percentage per language
+- Total translations vs manual overrides
+- Content type breakdown
+- Recent translation activity
+
+**Translation Manager:**
+- Filter by language and content type
+- View original and translated text side-by-side
+- Edit translations inline
+- Mark translations as manual overrides
+
+**Bulk Operations:**
+- Auto-translate all missing content
+- Select target language
+- Choose content types
+- Track progress in real-time
+
+### API Endpoints
+
+**Fetch Languages:**
+```
+GET /api/translations.php/languages?active_only=true
+
+Response:
+{
+  "success": true,
+  "languages": [
+    {
+      "lang_code": "es",
+      "lang_name": "Spanish",
+      "native_name": "Español",
+      "flag_icon": "🇪🇸",
+      "rtl": false,
+      "active": true
+    }
+  ]
+}
+```
+
+**Fetch Translation:**
+```
+GET /api/translations.php?content_type=blog&content_id=5&field_name=title&lang_code=es
+
+Response:
+{
+  "success": true,
+  "translation": "Cómo diseñar logos profesionales",
+  "lang_code": "es"
+}
+```
+
+**Batch Fetch Translations:**
+```
+GET /api/translations.php/batch?content_type=blog&content_id=5&lang_code=es
+
+Response:
+{
+  "success": true,
+  "translations": {
+    "title": {
+      "text": "Cómo diseñar logos profesionales",
+      "manual": false
+    },
+    "content": {
+      "text": "El diseño de logos requiere...",
+      "manual": false
+    }
+  }
+}
+```
+
+**Auto-Translate (Admin Only):**
+```
+POST /api/translations.php
+Authorization: Bearer [admin_token]
+Content-Type: application/json
+
+{
+  "action": "auto_translate",
+  "text": "Professional design services",
+  "source_lang": "en",
+  "target_lang": "es"
+}
+
+Response:
+{
+  "success": true,
+  "translated": "Servicios de diseño profesional"
+}
+```
+
+**Bulk Translate (Admin Only):**
+```
+POST /api/translations.php
+Authorization: Bearer [admin_token]
+Content-Type: application/json
+
+{
+  "action": "bulk_translate",
+  "content_type": "blog",
+  "target_lang": "es",
+  "limit": 100
+}
+
+Response:
+{
+  "success": true,
+  "result": {
+    "processed": 50,
+    "translated": 48,
+    "target_lang": "es"
+  }
+}
+```
+
+### SEO Features
+
+**Hreflang Tags (Automatic):**
+```html
+<link rel="alternate" hreflang="en" href="https://adilgfx.com/blog" />
+<link rel="alternate" hreflang="es" href="https://adilgfx.com/es/blog" />
+<link rel="alternate" hreflang="fr" href="https://adilgfx.com/fr/blog" />
+<link rel="alternate" hreflang="x-default" href="https://adilgfx.com/blog" />
+```
+
+**Translated URLs:**
+- English (default): `https://adilgfx.com/blog/my-post`
+- Spanish: `https://adilgfx.com/es/blog/my-post`
+- French: `https://adilgfx.com/fr/blog/my-post`
+
+**OpenGraph Localization:**
+```html
+<meta property="og:locale" content="es" />
+<meta property="og:locale:alternate" content="en" />
+<meta property="og:locale:alternate" content="fr" />
+```
+
+### Monitoring & Analytics
+
+**Translation Stats API:**
+```
+GET /api/translations.php/stats
+
+Response:
+{
+  "success": true,
+  "stats": [
+    {
+      "lang_code": "es",
+      "lang_name": "Spanish",
+      "total_translations": 250,
+      "manual_overrides": 15,
+      "avg_completion": 95.5
+    }
+  ]
+}
+```
+
+**Cache Statistics:**
+```sql
+SELECT
+  target_lang,
+  COUNT(*) as cached_items,
+  SUM(cache_hits) as total_hits,
+  AVG(cache_hits) as avg_hits
+FROM translation_cache
+GROUP BY target_lang;
+```
+
+### Troubleshooting
+
+**Issue: Translations not appearing**
+
+Solution:
+```sql
+-- Check if translations exist
+SELECT * FROM translations
+WHERE lang_code = 'es' AND content_type = 'blog' AND content_id = 1;
+
+-- Check language is active
+SELECT * FROM supported_languages WHERE lang_code = 'es';
+```
+
+**Issue: API key not working**
+
+Test:
+```bash
+curl "https://translation.googleapis.com/language/translate/v2?key=YOUR_KEY&q=hello&target=es"
+```
+
+**Issue: High API costs**
+
+Check cache effectiveness:
+```sql
+SELECT
+  COUNT(*) as total_translations,
+  SUM(CASE WHEN cache_hits > 0 THEN 1 ELSE 0 END) as cached,
+  ROUND(SUM(CASE WHEN cache_hits > 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as cache_rate
+FROM translation_cache;
+```
+
+Target: > 70% cache hit rate
+
+### Documentation
+
+**Detailed Guide:** See `TRANSLATION_SYSTEM_README.md` for:
+- Complete setup instructions
+- Developer integration guide
+- Admin panel usage
+- Best practices
+- Cost optimization
+- Migration guide
+
+**Translation Manager Class:** `backend/classes/TranslationManager.php`
+**API Endpoints:** `backend/api/translations.php`, `backend/api/admin/translations.php`
+**Frontend Context:** `src/contexts/LanguageContext.tsx`
+**React Hook:** `src/hooks/useTranslatedContent.ts`
+
+---
+
+## 9. Admin Panel API Management
 
 ### Common Issues
 

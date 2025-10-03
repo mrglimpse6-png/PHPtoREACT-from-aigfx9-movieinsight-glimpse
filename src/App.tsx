@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "@/components/theme-provider";
 import { GlobalSettingsProvider } from "@/components/global-settings-provider";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
@@ -35,8 +36,9 @@ const App = () => (
     <HelmetProvider>
       <ThemeProvider defaultTheme="light" storageKey="adil-portfolio-theme">
         <GlobalSettingsProvider>
-        <TooltipProvider>
-          <ErrorBoundary>
+          <LanguageProvider>
+            <TooltipProvider>
+              <ErrorBoundary>
             <Toaster />
             <Sonner />
             <BrowserRouter>
@@ -63,8 +65,9 @@ const App = () => (
               <FloatingWhatsApp />
               <AnalyticsConsentModal />
             </BrowserRouter>
-          </ErrorBoundary>
-        </TooltipProvider>
+              </ErrorBoundary>
+            </TooltipProvider>
+          </LanguageProvider>
         </GlobalSettingsProvider>
       </ThemeProvider>
     </HelmetProvider>
