@@ -7,16 +7,18 @@ import { LeadMagnet } from "@/components/lead-magnet"
 import { PricingEstimator } from "@/components/pricing-estimator"
 import { CalendlyBooking } from "@/components/calendly-booking"
 import { SEOHead } from "@/components/seo-head"
+import { PopupOffer } from "@/components/popup-offer"
 
 export default function Home() {
   return (
     <>
-      <SEOHead 
+      <SEOHead
         title="Adil GFX - Professional Logo Design, YouTube Thumbnails & Video Editing"
         description="Transform your brand with premium logo design, high-converting YouTube thumbnails, and professional video editing. Trusted by 500+ clients worldwide. Get results in 24-48 hours."
         keywords="logo design, youtube thumbnails, video editing, brand identity, graphic design, youtube optimization, channel setup, adil gfx"
         url="https://adilgfx.com"
       />
+      <PopupOffer variant="first-time" />
       <main className="pt-16">
       <HeroSection />
       
