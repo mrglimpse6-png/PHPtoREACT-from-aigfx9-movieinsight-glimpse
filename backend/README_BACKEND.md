@@ -978,7 +978,424 @@ tail -f /home/username/logs/php_errors.log
 | Email Not Sending | Test SMTP config with `test_smtp.php`, check credentials |
 | Rate Limit Errors | Increase limits in config or whitelist IP |
 
-### Integration Status
+### Funnel Tester System
+
+### Overview
+
+The Funnel Tester Engine simulates complete user journeys from traffic source to conversion, testing all integrations and identifying bottlenecks.
+
+### Funnel Stages
+
+The tester simulates 6 core stages:
+
+1. **Landing (Stage 1)**: Initial page view with analytics tracking
+2. **Signup (Stage 2)**: User registration with token assignment
+3. **Engagement (Stage 3)**: Welcome emails, WhatsApp messages, Telegram notifications
+4. **Service Selection (Stage 4)**: Add service to cart simulation
+5. **Checkout (Stage 5)**: Payment processing (Stripe or Coinbase)
+6. **Post-Purchase (Stage 6)**: Order confirmation communications
+
+### Mock User Generation
+
+Each test creates a realistic mock user:
+
+```php
+{
+  "full_name": "Jane Smith",
+  "email": "jane.smith847@testuser.com",
+  "phone": "+12345678900",
+  "token_balance": 100,
+  "role": "user"
+}
+```
+
+### Running Funnel Tests
+
+**Via Admin Panel:**
+1. Navigate to `/backend/admin/`
+2. Go to **Funnel Testing** section
+3. Select traffic source: `google`, `linkedin`, `email`, `direct`, `social`
+4. Select payment method: `stripe` or `coinbase`
+5. Click **Run Test**
+6. View real-time progress and results
+
+**Via API:**
+```bash
+curl -X POST https://yourdomain.com/backend/api/funnel/simulate.php \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "traffic_source": "google",
+    "payment_method": "stripe"
+  }'
+```
+
+**Via Command Line:**
+```bash
+php backend/scripts/test_funnel.php google stripe
+```
+
+### Example Test Output
+
+```json
+{
+  "simulation_id": 42,
+  "traffic_source": "google",
+  "steps": [
+    {
+      "step": "landing",
+      "status": "success",
+      "duration_ms": 1243
+    },
+    {
+      "step": "signup",
+      "status": "success",
+      "user_id": 156,
+      "tokens_assigned": 100,
+      "duration_ms": 892
+    },
+    {
+      "step": "engagement",
+      "status": "success",
+      "apis_triggered": 3,
+      "duration_ms": 2456
+    },
+    {
+      "step": "service_selection",
+      "status": "success",
+      "service": {
+        "name": "Premium Logo Design",
+        "price": 299.00
+      },
+      "duration_ms": 1105
+    },
+    {
+      "step": "checkout",
+      "status": "success",
+      "payment_method": "stripe",
+      "amount": 299.00,
+      "duration_ms": 1876
+    },
+    {
+      "step": "post_purchase",
+      "status": "success",
+      "order_number": "ORD-A8F3B2C1",
+      "apis_triggered": 3,
+      "duration_ms": 2234
+    }
+  ],
+  "completion": {
+    "success": true,
+    "summary": {
+      "total_steps": 6,
+      "successful_steps": 6,
+      "failed_steps": 0,
+      "total_duration_ms": 9806,
+      "conversion_value": 299.00
+    }
+  }
+}
+```
+
+### Funnel Analytics
+
+**View Simulation History:**
+```bash
+curl https://yourdomain.com/backend/api/funnel/report.php \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+**Response includes:**
+- Total simulations run
+- Success rate by traffic source
+- Average completion time
+- Step-by-step conversion rates
+- API integration success rates
+- Revenue simulation totals
+
+### Database Tables
+
+**funnel_simulations:**
+```sql
+CREATE TABLE funnel_simulations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    traffic_source VARCHAR(50) NOT NULL,
+    mock_user_id INT,
+    status ENUM('pending', 'in_progress', 'completed', 'failed'),
+    conversion_value DECIMAL(10,2),
+    started_at TIMESTAMP,
+    completed_at TIMESTAMP,
+    total_duration_ms INT
+);
+```
+
+**funnel_steps:**
+```sql
+CREATE TABLE funnel_steps (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    simulation_id INT NOT NULL,
+    step_name VARCHAR(100) NOT NULL,
+    step_order INT NOT NULL,
+    status ENUM('pending', 'success', 'failed'),
+    api_calls_made JSON,
+    response_data JSON,
+    error_message TEXT,
+    duration_ms INT,
+    executed_at TIMESTAMP,
+    FOREIGN KEY (simulation_id) REFERENCES funnel_simulations(id)
+);
+```
+
+### Integration Testing
+
+The funnel tester validates:
+
+- **SendGrid**: Welcome email delivery, order confirmations
+- **WhatsApp**: Welcome messages, order notifications
+- **Telegram**: Admin alerts for leads and orders
+- **Stripe**: Payment intent creation (test mode)
+- **Coinbase**: Charge creation (test mode)
+- **Database**: User creation, token assignment, order logging
+
+### Monitoring & Alerts
+
+**Telegram Notifications:**
+- Test started: "🧪 Funnel Test Started - ID: 42, Source: google"
+- Test completed: "✅ Funnel Test Completed - 6/6 steps successful, 9.8s"
+- Test failed: "❌ Funnel Test Failed - Step 3 failed: SendGrid API timeout"
+
+### Use Cases
+
+**Pre-Launch Testing:**
+- Verify all integrations work correctly
+- Identify configuration issues
+- Test payment flows without real transactions
+- Validate email delivery
+
+**Monitoring:**
+- Regular automated tests (cron job)
+- Alert if success rate drops below threshold
+- Track API uptime and response times
+
+**Optimization:**
+- Identify slowest funnel stages
+- A/B test different flows
+- Measure impact of changes
+
+**Compliance:**
+- Demonstrate system functionality
+- Provide audit trail
+- Document API usage
+
+## Admin Panel Enhancements
+
+### API Management Dashboard
+
+**Location:** `/backend/admin/cms.php → API Integrations`
+
+**Features:**
+- Real-time API status indicators (green/red)
+- Enable/disable toggle for each integration
+- Test connection button with live results
+- View recent API calls and response times
+- Configure API keys without touching code
+- Usage statistics and rate limit monitoring
+
+**Supported Integrations:**
+- SendGrid Email
+- WhatsApp Business Cloud
+- Telegram Bot
+- Stripe Payments
+- Coinbase Commerce
+- Google Search Console
+- PageSpeed Insights
+
+### Content Management Features
+
+**Blog Management:**
+- Create, edit, delete blog posts
+- Rich text WYSIWYG editor
+- Featured image upload
+- SEO meta tags per post
+- Publish/draft status
+- Scheduling (future publish dates)
+- Category and tag management
+
+**Portfolio Management:**
+- Add portfolio projects
+- Before/after image sliders
+- Client information
+- Results metrics (ROI, engagement, etc.)
+- Featured projects toggle
+- Project categories
+
+**Service Management:**
+- Dynamic service creation
+- Pricing tiers and packages
+- Service descriptions with HTML support
+- Icon/image upload
+- Featured services
+- Service ordering (drag-and-drop)
+
+**Testimonial Management:**
+- Add client testimonials
+- Client avatar upload
+- Star ratings
+- Verification status toggle
+- Featured testimonials
+- Display order management
+
+**Page Management:**
+- Create unlimited custom pages
+- Section-based page builder
+- Drag-and-drop section ordering
+- SEO optimization per page
+- Navigation menu auto-updates
+- Template selection
+
+**Carousel Management:**
+- Multiple carousel support (hero, testimonials, portfolio)
+- Image upload with captions
+- CTA button configuration
+- Link URLs
+- Slide ordering (drag-and-drop)
+- Auto-play settings
+
+**Media Library:**
+- Upload images, videos, documents
+- Grid view with thumbnails
+- Search and filter
+- Alt text and captions
+- File size and type info
+- Usage tracking (where file is used)
+- Bulk operations
+
+### Funnel Testing Interface
+
+**Location:** `/backend/admin/cms.php → Funnel Testing`
+
+**Run New Test:**
+1. Select traffic source dropdown
+2. Select payment method dropdown
+3. Click "Run Funnel Test"
+4. Watch real-time progress bar
+5. View detailed results
+
+**Test History:**
+- List of all previous tests
+- Filter by date range
+- Filter by traffic source
+- View detailed step-by-step breakdown
+- Export reports to CSV
+
+**Analytics Dashboard:**
+- Success rate by traffic source
+- Average completion time
+- Most common failure points
+- API integration health scores
+- Conversion value totals
+
+### User Management
+
+**Features:**
+- View all registered users
+- Search by email, name, or ID
+- Filter by role (admin/user)
+- User activity log
+- Token balance management
+- Login streak tracking
+- Referral statistics
+- Send targeted notifications
+- Account status (active/suspended)
+
+**User Actions:**
+- Edit user details
+- Reset password
+- Adjust token balance
+- Grant/revoke admin privileges
+- View user orders and projects
+- Send direct notifications
+
+### Activity Audit Log
+
+**Location:** `/backend/api/admin/activity.php`
+
+**Logged Actions:**
+- Admin logins and logouts
+- Content creation/editing/deletion
+- User management actions
+- Settings changes
+- API key updates
+- Funnel tests run
+- Database backups
+
+**Log Entry Example:**
+```json
+{
+  "id": 1234,
+  "admin_id": 1,
+  "admin_email": "admin@adilgfx.com",
+  "action": "blog_post_created",
+  "entity_type": "blog",
+  "entity_id": 42,
+  "changes": {
+    "title": "New Design Trends 2025",
+    "status": "published"
+  },
+  "ip_address": "192.168.1.100",
+  "user_agent": "Mozilla/5.0...",
+  "timestamp": "2025-01-01 14:30:00"
+}
+```
+
+### Dashboard Statistics
+
+**Real-time Metrics:**
+- Total users registered
+- New users (last 7 days)
+- Active users (logged in last 30 days)
+- Total blog posts
+- Total portfolio items
+- Total testimonials
+- Total services
+- Contact form submissions (pending)
+- Newsletter subscribers
+- Total revenue (from orders)
+- Conversion rate
+- Average order value
+
+**Growth Charts:**
+- User registration over time
+- Revenue over time
+- Page views over time
+- Popular content
+- Traffic sources
+
+### Security Features
+
+**Access Control:**
+- Role-based permissions (admin vs user)
+- JWT token authentication
+- Session management
+- IP whitelisting (optional)
+- Failed login tracking
+- Account lockout after failed attempts
+
+**Data Protection:**
+- All passwords hashed with bcrypt
+- SQL injection prevention
+- XSS protection
+- CSRF token validation
+- File upload validation
+- Secure cookie handling
+
+**Admin Notifications:**
+- Alert on multiple failed logins
+- Notify on admin account creation
+- Alert on critical errors
+- Notify on high API usage
+
+## Integration Status
 
 **API Integrations (Part 2):**
 - ✅ Stripe Payment Processing
@@ -990,14 +1407,30 @@ tail -f /home/username/logs/php_errors.log
 - ✅ PageSpeed Insights API
 
 **Funnel Tester Engine:**
-- ✅ Visitor flow simulation (4 scenarios)
+- ✅ Visitor flow simulation (6 stages)
+- ✅ Mock user generation
+- ✅ API integration testing
 - ✅ Conversion tracking
 - ✅ Funnel analytics and reporting
 - ✅ A/B testing foundation
 - ✅ Session duration tracking
 - ✅ Drop-off point identification
+- ✅ Real-time Telegram notifications
+- ✅ Automated testing capability
+
+**Admin Panel Features:**
+- ✅ API management dashboard
+- ✅ Content CRUD operations (blogs, portfolio, services)
+- ✅ Media library with upload
+- ✅ User management
+- ✅ Activity audit logs
+- ✅ Real-time statistics
+- ✅ Funnel testing interface
+- ✅ Settings management
+- ✅ Security hardening
 
 See `README_APIS.md` for complete API integration documentation.
+See `DEPLOYMENT_HOSTINGER.md` for deployment instructions.
 
 ## License
 MIT License - See LICENSE file for details
