@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Upload, X } from 'lucide-react';
+import { Loader as Loader2, Upload, X } from 'lucide-react';
 import { Blog } from '../../utils/api';
 import { blogSchema, BlogFormValues } from '../../utils/validation';
 import { useCreateBlog, useUpdateBlog, useUploadImage } from '../../hooks/useBlogs';
