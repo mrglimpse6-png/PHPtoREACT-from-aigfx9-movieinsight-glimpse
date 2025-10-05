@@ -129,6 +129,79 @@ export interface ActivityItem {
   user?: string;
 }
 
+export interface Service {
+  id: number;
+  title: string;
+  slug: string;
+  description: string;
+  price: number;
+  icon: string;
+  features: string[];
+  gallery: string[];
+  published: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ServiceFormData {
+  title: string;
+  description: string;
+  price: number;
+  icon: string;
+  features: string[];
+  gallery: string[];
+  published: boolean;
+  display_order: number;
+}
+
+export interface Portfolio {
+  id: number;
+  title: string;
+  slug: string;
+  description: string;
+  client_name: string;
+  project_type: string;
+  images: string[];
+  featured: boolean;
+  category: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PortfolioFormData {
+  title: string;
+  description: string;
+  client_name: string;
+  project_type: string;
+  images: string[];
+  featured: boolean;
+  category: string;
+}
+
+export interface Testimonial {
+  id: number;
+  client_name: string;
+  client_company: string;
+  rating: 1 | 2 | 3 | 4 | 5;
+  content: string;
+  avatar: string;
+  published: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TestimonialFormData {
+  client_name: string;
+  client_company: string;
+  rating: 1 | 2 | 3 | 4 | 5;
+  content: string;
+  avatar: string;
+  published: boolean;
+  display_order: number;
+}
+
 export const adminApi = {
   auth: {
     login: async (email: string, password: string) => {
@@ -210,6 +283,133 @@ export const adminApi = {
       }
 
       return response.json();
+    },
+  },
+
+  services: {
+    getAll: async () => {
+      return request<ApiResponse<{ services: Service[] }>>('/api/services.php');
+    },
+
+    getById: async (id: number) => {
+      return request<ApiResponse<{ service: Service }>>(`/api/services.php/${id}`);
+    },
+
+    create: async (data: ServiceFormData) => {
+      return request<ApiResponse<{ id: number }>>('/api/services.php', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+
+    update: async (id: number, data: ServiceFormData) => {
+      return request<ApiResponse>(`/api/services.php/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    },
+
+    delete: async (id: number) => {
+      return request<ApiResponse>(`/api/services.php/${id}`, {
+        method: 'DELETE',
+      });
+    },
+
+    updateOrder: async (services: Array<{ id: number; display_order: number }>) => {
+      return request<ApiResponse>('/api/services.php/reorder', {
+        method: 'PUT',
+        body: JSON.stringify({ services }),
+      });
+    },
+  },
+
+  portfolio: {
+    getAll: async () => {
+      return request<ApiResponse<{ portfolio: Portfolio[] }>>('/api/portfolio.php');
+    },
+
+    getById: async (id: number) => {
+      return request<ApiResponse<{ project: Portfolio }>>(`/api/portfolio.php/${id}`);
+    },
+
+    create: async (data: PortfolioFormData) => {
+      return request<ApiResponse<{ id: number }>>('/api/portfolio.php', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+
+    update: async (id: number, data: PortfolioFormData) => {
+      return request<ApiResponse>(`/api/portfolio.php/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    },
+
+    delete: async (id: number) => {
+      return request<ApiResponse>(`/api/portfolio.php/${id}`, {
+        method: 'DELETE',
+      });
+    },
+
+    uploadImages: async (files: File[]) => {
+      const token = getAuthToken();
+      const formData = new FormData();
+      files.forEach((file, index) => {
+        formData.append(`files[${index}]`, file);
+      });
+
+      const response = await fetch(`${API_BASE_URL}/api/uploads.php`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new AdminApiError(error.error || 'Upload failed', response.status);
+      }
+
+      return response.json();
+    },
+  },
+
+  testimonials: {
+    getAll: async () => {
+      return request<ApiResponse<{ testimonials: Testimonial[] }>>('/api/testimonials.php');
+    },
+
+    getById: async (id: number) => {
+      return request<ApiResponse<{ testimonial: Testimonial }>>(`/api/testimonials.php/${id}`);
+    },
+
+    create: async (data: TestimonialFormData) => {
+      return request<ApiResponse<{ id: number }>>('/api/testimonials.php', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+
+    update: async (id: number, data: TestimonialFormData) => {
+      return request<ApiResponse>(`/api/testimonials.php/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    },
+
+    delete: async (id: number) => {
+      return request<ApiResponse>(`/api/testimonials.php/${id}`, {
+        method: 'DELETE',
+      });
+    },
+
+    updateOrder: async (testimonials: Array<{ id: number; display_order: number }>) => {
+      return request<ApiResponse>('/api/testimonials.php/reorder', {
+        method: 'PUT',
+        body: JSON.stringify({ testimonials }),
+      });
     },
   },
 };
